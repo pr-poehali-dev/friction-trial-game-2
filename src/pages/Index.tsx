@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import Icon from '@/components/ui/icon';
 import { Badge } from '@/components/ui/badge';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
-type Stage = 'intro' | 'prosecution' | 'task1' | 'defense' | 'task2' | 'witnesses' | 'task3' | 'verdict';
+type Stage = 'intro' | 'prosecution-select' | 'prosecution-present' | 'task1' | 'defense-select' | 'defense-present' | 'task2' | 'witnesses' | 'task3' | 'debate' | 'verdict';
 
 interface Argument {
   id: number;
   text: string;
+  shortText: string;
   used: boolean;
 }
 
@@ -23,9 +26,12 @@ interface Character {
 
 const Index = () => {
   const [stage, setStage] = useState<Stage>('intro');
-  const [currentArgumentIndex, setCurrentArgumentIndex] = useState(0);
+  const [selectedProsecutorArgs, setSelectedProsecutorArgs] = useState<number[]>([]);
+  const [selectedDefenderArgs, setSelectedDefenderArgs] = useState<number[]>([]);
+  const [currentPresentingArgIndex, setCurrentPresentingArgIndex] = useState(0);
   const [selectedWitness, setSelectedWitness] = useState<string | null>(null);
   const [taskAnswers, setTaskAnswers] = useState<{ [key: string]: boolean }>({});
+  const [debateAnswer, setDebateAnswer] = useState<string>('');
 
   const characters: { [key: string]: Character } = {
     prosecutor: {
@@ -34,10 +40,30 @@ const Index = () => {
       image: 'https://cdn.poehali.dev/projects/dc3fb366-3615-4a31-a6b9-090b764de0a1/files/e6a346ec-4212-43a5-a166-eec911e78544.jpg',
       color: 'prosecutor',
       arguments: [
-        { id: 1, text: '🔥 Я вызываю пожары! Когда детали машин трутся друг о друга, выделяется огромное количество тепла. Это может привести к возгоранию!', used: false },
-        { id: 2, text: '⚙️ Я разрушаю механизмы! Из-за меня стираются подшипники, шестерни и другие детали. Люди тратят миллионы на ремонт!', used: false },
-        { id: 3, text: '⚡ Я пожираю энергию! Около 20% топлива в автомобиле расходуется впустую только из-за меня. Это огромные потери!', used: false },
-        { id: 4, text: '💨 Я замедляю прогресс! Без меня все двигалось бы быстрее и эффективнее. Я - враг скорости и развития!', used: false },
+        { 
+          id: 1, 
+          shortText: 'Причина пожаров в механизмах',
+          text: '🔥 Я вызываю пожары! Когда детали машин трутся друг о друга, выделяется огромное количество тепла. Это может привести к возгоранию!', 
+          used: false 
+        },
+        { 
+          id: 2, 
+          shortText: 'Разрушение механизмов',
+          text: '⚙️ Я разрушаю механизмы! Из-за меня стираются подшипники, шестерни и другие детали. Люди тратят миллионы на ремонт!', 
+          used: false 
+        },
+        { 
+          id: 3, 
+          shortText: 'Потери энергии',
+          text: '⚡ Я пожираю энергию! Около 20% топлива в автомобиле расходуется впустую только из-за меня. Это огромные потери!', 
+          used: false 
+        },
+        { 
+          id: 4, 
+          shortText: 'Замедление прогресса',
+          text: '💨 Я замедляю прогресс! Без меня все двигалось бы быстрее и эффективнее. Я - враг скорости и развития!', 
+          used: false 
+        },
       ]
     },
     defender: {
@@ -46,10 +72,30 @@ const Index = () => {
       image: 'https://cdn.poehali.dev/projects/dc3fb366-3615-4a31-a6b9-090b764de0a1/files/97010d93-666f-416c-ab06-482f40208acc.jpg',
       color: 'defender',
       arguments: [
-        { id: 1, text: '👟 Без меня вы не смогли бы ходить! Каждый шаг - это благодаря трению между подошвой и землёй. Попробуйте пойти по льду - и поймёте мою важность!', used: false },
-        { id: 2, text: '🚗 Я останавливаю машины! Тормоза работают только благодаря мне. Без трения автомобили не могли бы остановиться - представляете катастрофу?', used: false },
-        { id: 3, text: '✍️ Я помогаю писать и рисовать! Карандаш оставляет след на бумаге именно из-за трения. Без меня не было бы ни книг, ни рисунков!', used: false },
-        { id: 4, text: '🔩 Я удерживаю всё на месте! Гвозди держатся в стене, узлы не развязываются, предметы не соскальзывают - всё это моя работа!', used: false },
+        { 
+          id: 1, 
+          shortText: 'Возможность ходить',
+          text: '👟 Без меня вы не смогли бы ходить! Каждый шаг - это благодаря трению между подошвой и землёй. Попробуйте пойти по льду - и поймёте мою важность!', 
+          used: false 
+        },
+        { 
+          id: 2, 
+          shortText: 'Работа тормозов',
+          text: '🚗 Я останавливаю машины! Тормоза работают только благодаря мне. Без трения автомобили не могли бы остановиться - представляете катастрофу?', 
+          used: false 
+        },
+        { 
+          id: 3, 
+          shortText: 'Письмо и рисование',
+          text: '✍️ Я помогаю писать и рисовать! Карандаш оставляет след на бумаге именно из-за трения. Без меня не было бы ни книг, ни рисунков!', 
+          used: false 
+        },
+        { 
+          id: 4, 
+          shortText: 'Удержание предметов',
+          text: '🔩 Я удерживаю всё на месте! Гвозди держатся в стене, узлы не развязываются, предметы не соскальзывают - всё это моя работа!', 
+          used: false 
+        },
       ]
     }
   };
@@ -102,31 +148,60 @@ const Index = () => {
     }
   };
 
+  const debateQuestions = [
+    {
+      id: 'debate1',
+      question: 'Обвинение заявляет: "Трение - главный враг прогресса!" Какой контраргумент выберет защита?',
+      options: [
+        { text: 'Без трения человечество не смогло бы построить цивилизацию - мы бы не могли ходить, держать инструменты и останавливать транспорт', correct: true },
+        { text: 'Трение можно уменьшить смазкой', correct: false },
+        { text: 'Прогресс важнее безопасности', correct: false }
+      ]
+    }
+  ];
+
   const getProgressPercentage = () => {
-    const stages: Stage[] = ['intro', 'prosecution', 'task1', 'defense', 'task2', 'witnesses', 'task3', 'verdict'];
+    const stages: Stage[] = ['intro', 'prosecution-select', 'prosecution-present', 'task1', 'defense-select', 'defense-present', 'task2', 'witnesses', 'task3', 'debate', 'verdict'];
     return (stages.indexOf(stage) / (stages.length - 1)) * 100;
   };
 
-  const handleNextArgument = (character: 'prosecutor' | 'defender') => {
-    const char = characters[character];
-    if (currentArgumentIndex < char.arguments.length - 1) {
-      setCurrentArgumentIndex(currentArgumentIndex + 1);
+  const handleProsecutorArgSelect = (argId: number) => {
+    if (selectedProsecutorArgs.includes(argId)) {
+      setSelectedProsecutorArgs(selectedProsecutorArgs.filter(id => id !== argId));
+    } else if (selectedProsecutorArgs.length < 3) {
+      setSelectedProsecutorArgs([...selectedProsecutorArgs, argId]);
+    }
+  };
+
+  const handleDefenderArgSelect = (argId: number) => {
+    if (selectedDefenderArgs.includes(argId)) {
+      setSelectedDefenderArgs(selectedDefenderArgs.filter(id => id !== argId));
+    } else if (selectedDefenderArgs.length < 3) {
+      setSelectedDefenderArgs([...selectedDefenderArgs, argId]);
+    }
+  };
+
+  const handleNextPresentingArg = (character: 'prosecutor' | 'defender') => {
+    const selectedArgs = character === 'prosecutor' ? selectedProsecutorArgs : selectedDefenderArgs;
+    
+    if (currentPresentingArgIndex < selectedArgs.length - 1) {
+      setCurrentPresentingArgIndex(currentPresentingArgIndex + 1);
     } else {
       if (character === 'prosecutor') {
         setStage('task1');
       } else {
         setStage('task2');
       }
-      setCurrentArgumentIndex(0);
+      setCurrentPresentingArgIndex(0);
     }
   };
 
   const handleTaskAnswer = (taskId: string, correct: boolean) => {
     setTaskAnswers({ ...taskAnswers, [taskId]: correct });
     setTimeout(() => {
-      if (taskId === 'task1') setStage('defense');
+      if (taskId === 'task1') setStage('defense-select');
       else if (taskId === 'task2') setStage('witnesses');
-      else if (taskId === 'task3') setStage('verdict');
+      else if (taskId === 'task3') setStage('debate');
     }, 1500);
   };
 
@@ -146,30 +221,30 @@ const Index = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-6">
-            <h3 className="text-xl font-semibold mb-3 text-amber-900">📋 О судебном процессе:</h3>
+            <h3 className="text-xl font-semibold mb-3 text-amber-900">📋 Как проходит суд:</h3>
             <ul className="space-y-2 text-amber-800">
               <li className="flex items-start gap-2">
                 <Icon name="Check" className="mt-1 flex-shrink-0 text-amber-600" size={20} />
-                <span><strong>Обвинение:</strong> Вредное трение представит свои аргументы о вреде трения</span>
+                <span><strong>Обвинение:</strong> Выберите 3 сильнейших аргумента Вредного Трения</span>
               </li>
               <li className="flex items-start gap-2">
                 <Icon name="Check" className="mt-1 flex-shrink-0 text-amber-600" size={20} />
-                <span><strong>Защита:</strong> Полезное трение докажет свою важность</span>
+                <span><strong>Защита:</strong> Выберите 3 контраргумента Полезного Трения</span>
               </li>
               <li className="flex items-start gap-2">
                 <Icon name="Check" className="mt-1 flex-shrink-0 text-amber-600" size={20} />
-                <span><strong>Свидетели:</strong> Шипы, смазка и подшипники дадут показания</span>
+                <span><strong>Свидетели:</strong> Послушайте показания экспертов</span>
               </li>
               <li className="flex items-start gap-2">
                 <Icon name="Check" className="mt-1 flex-shrink-0 text-amber-600" size={20} />
-                <span><strong>Задания:</strong> Вам нужно будет ответить на вопросы между этапами</span>
+                <span><strong>Дебаты:</strong> Выберите лучший контраргумент в финальном споре</span>
               </li>
             </ul>
           </div>
           <Button 
-            onClick={() => setStage('prosecution')} 
+            onClick={() => setStage('prosecution-select')} 
             size="lg" 
-            className="w-full text-lg h-14 bg-judge hover:bg-judge/90"
+            className="w-full text-lg h-14 bg-judge hover:bg-judge/90 text-white"
           >
             Начать судебное заседание
             <Icon name="Gavel" className="ml-2" size={24} />
@@ -179,9 +254,87 @@ const Index = () => {
     </div>
   );
 
-  const renderProsecution = () => {
+  const renderProsecutionSelect = () => {
     const prosecutor = characters.prosecutor;
-    const currentArg = prosecutor.arguments[currentArgumentIndex];
+
+    return (
+      <div className="min-h-screen p-4 bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <Progress value={getProgressPercentage()} className="h-3" />
+          
+          <Card className="animate-fade-in shadow-xl border-prosecutor border-2">
+            <CardHeader className="bg-prosecutor/10">
+              <div className="flex items-center gap-4 mb-4">
+                <img 
+                  src={prosecutor.image} 
+                  alt={prosecutor.name} 
+                  className="w-24 h-24 rounded-full border-4 border-prosecutor shadow-lg"
+                />
+                <div>
+                  <Badge className="mb-2 bg-prosecutor text-white">{prosecutor.role}</Badge>
+                  <CardTitle className="text-3xl text-prosecutor">{prosecutor.name}</CardTitle>
+                </div>
+              </div>
+              <CardDescription className="text-lg">
+                Выберите 3 самых убедительных аргумента обвинения ({selectedProsecutorArgs.length}/3)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-4">
+              {prosecutor.arguments.map((arg) => (
+                <Card 
+                  key={arg.id}
+                  className={`cursor-pointer transition-all hover:scale-[1.02] ${
+                    selectedProsecutorArgs.includes(arg.id) 
+                      ? 'ring-4 ring-prosecutor bg-red-50 border-prosecutor' 
+                      : 'hover:border-prosecutor'
+                  }`}
+                  onClick={() => handleProsecutorArgSelect(arg.id)}
+                >
+                  <CardContent className="p-4 flex items-start gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      selectedProsecutorArgs.includes(arg.id) 
+                        ? 'bg-prosecutor text-white' 
+                        : 'bg-gray-200 text-gray-500'
+                    }`}>
+                      {selectedProsecutorArgs.includes(arg.id) ? (
+                        <Icon name="Check" size={20} />
+                      ) : (
+                        <span>{arg.id}</span>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-lg mb-1">{arg.shortText}</p>
+                      <p className="text-sm text-muted-foreground">{arg.text}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              <Button 
+                onClick={() => {
+                  setStage('prosecution-present');
+                  setCurrentPresentingArgIndex(0);
+                }}
+                size="lg"
+                className="w-full bg-prosecutor hover:bg-prosecutor/90 text-white mt-6"
+                disabled={selectedProsecutorArgs.length !== 3}
+              >
+                Огласить обвинение в суде
+                <Icon name="ArrowRight" className="ml-2" size={20} />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  };
+
+  const renderProsecutionPresent = () => {
+    const prosecutor = characters.prosecutor;
+    const currentArgId = selectedProsecutorArgs[currentPresentingArgIndex];
+    const currentArg = prosecutor.arguments.find(arg => arg.id === currentArgId);
+
+    if (!currentArg) return null;
 
     return (
       <div className="min-h-screen p-4 bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50">
@@ -209,14 +362,14 @@ const Index = () => {
               
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">
-                  Аргумент {currentArgumentIndex + 1} из {prosecutor.arguments.length}
+                  Аргумент {currentPresentingArgIndex + 1} из {selectedProsecutorArgs.length}
                 </span>
                 <Button 
-                  onClick={() => handleNextArgument('prosecutor')}
+                  onClick={() => handleNextPresentingArg('prosecutor')}
                   size="lg"
-                  className="bg-prosecutor hover:bg-prosecutor/90"
+                  className="bg-prosecutor hover:bg-prosecutor/90 text-white"
                 >
-                  {currentArgumentIndex < prosecutor.arguments.length - 1 ? 'Следующий аргумент' : 'Перейти к заданию'}
+                  {currentPresentingArgIndex < selectedProsecutorArgs.length - 1 ? 'Следующий аргумент' : 'Перейти к заданию'}
                   <Icon name="ArrowRight" className="ml-2" size={20} />
                 </Button>
               </div>
@@ -227,9 +380,87 @@ const Index = () => {
     );
   };
 
-  const renderDefense = () => {
+  const renderDefenseSelect = () => {
     const defender = characters.defender;
-    const currentArg = defender.arguments[currentArgumentIndex];
+
+    return (
+      <div className="min-h-screen p-4 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <Progress value={getProgressPercentage()} className="h-3" />
+          
+          <Card className="animate-fade-in shadow-xl border-defender border-2">
+            <CardHeader className="bg-defender/10">
+              <div className="flex items-center gap-4 mb-4">
+                <img 
+                  src={defender.image} 
+                  alt={defender.name} 
+                  className="w-24 h-24 rounded-full border-4 border-defender shadow-lg"
+                />
+                <div>
+                  <Badge className="mb-2 bg-defender text-white">{defender.role}</Badge>
+                  <CardTitle className="text-3xl text-defender">{defender.name}</CardTitle>
+                </div>
+              </div>
+              <CardDescription className="text-lg">
+                Выберите 3 самых убедительных аргумента защиты ({selectedDefenderArgs.length}/3)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-4">
+              {defender.arguments.map((arg) => (
+                <Card 
+                  key={arg.id}
+                  className={`cursor-pointer transition-all hover:scale-[1.02] ${
+                    selectedDefenderArgs.includes(arg.id) 
+                      ? 'ring-4 ring-defender bg-green-50 border-defender' 
+                      : 'hover:border-defender'
+                  }`}
+                  onClick={() => handleDefenderArgSelect(arg.id)}
+                >
+                  <CardContent className="p-4 flex items-start gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      selectedDefenderArgs.includes(arg.id) 
+                        ? 'bg-defender text-white' 
+                        : 'bg-gray-200 text-gray-500'
+                    }`}>
+                      {selectedDefenderArgs.includes(arg.id) ? (
+                        <Icon name="Check" size={20} />
+                      ) : (
+                        <span>{arg.id}</span>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-lg mb-1">{arg.shortText}</p>
+                      <p className="text-sm text-muted-foreground">{arg.text}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              <Button 
+                onClick={() => {
+                  setStage('defense-present');
+                  setCurrentPresentingArgIndex(0);
+                }}
+                size="lg"
+                className="w-full bg-defender hover:bg-defender/90 text-white mt-6"
+                disabled={selectedDefenderArgs.length !== 3}
+              >
+                Представить защиту в суде
+                <Icon name="ArrowRight" className="ml-2" size={20} />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  };
+
+  const renderDefensePresent = () => {
+    const defender = characters.defender;
+    const currentArgId = selectedDefenderArgs[currentPresentingArgIndex];
+    const currentArg = defender.arguments.find(arg => arg.id === currentArgId);
+
+    if (!currentArg) return null;
 
     return (
       <div className="min-h-screen p-4 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
@@ -257,14 +488,14 @@ const Index = () => {
               
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">
-                  Аргумент {currentArgumentIndex + 1} из {defender.arguments.length}
+                  Аргумент {currentPresentingArgIndex + 1} из {selectedDefenderArgs.length}
                 </span>
                 <Button 
-                  onClick={() => handleNextArgument('defender')}
+                  onClick={() => handleNextPresentingArg('defender')}
                   size="lg"
-                  className="bg-defender hover:bg-defender/90"
+                  className="bg-defender hover:bg-defender/90 text-white"
                 >
-                  {currentArgumentIndex < defender.arguments.length - 1 ? 'Следующий аргумент' : 'Перейти к заданию'}
+                  {currentPresentingArgIndex < selectedDefenderArgs.length - 1 ? 'Следующий аргумент' : 'Перейти к заданию'}
                   <Icon name="ArrowRight" className="ml-2" size={20} />
                 </Button>
               </div>
@@ -408,6 +639,88 @@ const Index = () => {
     </div>
   );
 
+  const renderDebate = () => {
+    const debate = debateQuestions[0];
+    const answered = debateAnswer !== '';
+
+    return (
+      <div className="min-h-screen p-4 bg-gradient-to-br from-orange-50 via-red-50 to-green-50">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <Progress value={getProgressPercentage()} className="h-3" />
+          
+          <Card className="animate-scale-in shadow-xl border-4 border-judge">
+            <CardHeader className="bg-judge/10">
+              <div className="flex items-center justify-between mb-4">
+                <img 
+                  src={characters.prosecutor.image}
+                  alt="Обвинение" 
+                  className="w-20 h-20 rounded-full border-4 border-prosecutor shadow-lg"
+                />
+                <div className="text-4xl">⚔️</div>
+                <img 
+                  src={characters.defender.image}
+                  alt="Защита" 
+                  className="w-20 h-20 rounded-full border-4 border-defender shadow-lg"
+                />
+              </div>
+              <CardTitle className="text-3xl text-center text-judge">Финальные дебаты</CardTitle>
+              <CardDescription className="text-center text-lg mt-2">
+                Выберите лучший контраргумент защиты
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
+              <div className="bg-red-50 border-2 border-prosecutor rounded-lg p-6">
+                <div className="flex items-start gap-3">
+                  <Badge className="bg-prosecutor text-white">Обвинение</Badge>
+                  <p className="text-lg font-semibold flex-1">{debate.question.split('"')[1]}</p>
+                </div>
+              </div>
+
+              <div className="bg-green-50 border-2 border-defender rounded-lg p-6">
+                <Badge className="bg-defender text-white mb-4">Защита отвечает</Badge>
+                <RadioGroup value={debateAnswer} onValueChange={setDebateAnswer}>
+                  <div className="space-y-3">
+                    {debate.options.map((option, index) => (
+                      <div
+                        key={index}
+                        className={`flex items-start space-x-3 p-4 rounded-lg border-2 transition-all ${
+                          debateAnswer === option.text
+                            ? option.correct
+                              ? 'border-green-500 bg-green-100'
+                              : 'border-red-500 bg-red-100'
+                            : 'border-gray-200 hover:border-defender'
+                        }`}
+                      >
+                        <RadioGroupItem value={option.text} id={`option-${index}`} />
+                        <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer text-base">
+                          {option.text}
+                        </Label>
+                        {debateAnswer === option.text && option.correct && (
+                          <Icon name="CheckCircle" className="text-green-600" size={24} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {answered && (
+                <Button 
+                  onClick={() => setStage('verdict')}
+                  size="lg"
+                  className="w-full bg-judge hover:bg-judge/90 text-white"
+                >
+                  Услышать вердикт суда
+                  <Icon name="Gavel" className="ml-2" size={24} />
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  };
+
   const renderVerdict = () => (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-yellow-50 via-orange-50 to-amber-50">
       <Card className="max-w-3xl w-full animate-scale-in shadow-2xl">
@@ -469,9 +782,12 @@ const Index = () => {
             <Button 
               onClick={() => {
                 setStage('intro');
-                setCurrentArgumentIndex(0);
+                setSelectedProsecutorArgs([]);
+                setSelectedDefenderArgs([]);
+                setCurrentPresentingArgIndex(0);
                 setSelectedWitness(null);
                 setTaskAnswers({});
+                setDebateAnswer('');
               }}
               size="lg"
               variant="outline"
@@ -483,7 +799,7 @@ const Index = () => {
             <Button 
               onClick={() => window.location.reload()}
               size="lg"
-              className="flex-1 bg-judge hover:bg-judge/90"
+              className="flex-1 bg-judge hover:bg-judge/90 text-white"
             >
               Завершить игру
               <Icon name="CheckCircle" className="ml-2" size={20} />
@@ -497,12 +813,15 @@ const Index = () => {
   return (
     <>
       {stage === 'intro' && renderIntro()}
-      {stage === 'prosecution' && renderProsecution()}
+      {stage === 'prosecution-select' && renderProsecutionSelect()}
+      {stage === 'prosecution-present' && renderProsecutionPresent()}
       {stage === 'task1' && renderTask('task1')}
-      {stage === 'defense' && renderDefense()}
+      {stage === 'defense-select' && renderDefenseSelect()}
+      {stage === 'defense-present' && renderDefensePresent()}
       {stage === 'task2' && renderTask('task2')}
       {stage === 'witnesses' && renderWitnesses()}
       {stage === 'task3' && renderTask('task3')}
+      {stage === 'debate' && renderDebate()}
       {stage === 'verdict' && renderVerdict()}
     </>
   );
