@@ -7,7 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 
-type Stage = 'intro' | 'prosecution-select' | 'prosecution-present' | 'task1' | 'defense-select' | 'defense-present' | 'task2' | 'witnesses' | 'task3' | 'debate' | 'verdict';
+type Stage = 'intro' | 'character-select' | 'prosecution-select' | 'prosecution-present' | 'task1' | 'defense-select' | 'defense-present' | 'task2' | 'witnesses' | 'task3' | 'debate' | 'verdict';
+
+type Role = 'prosecutor' | 'defender' | 'judge';
 
 interface Argument {
   id: number;
@@ -26,6 +28,7 @@ interface Character {
 
 const Index = () => {
   const [stage, setStage] = useState<Stage>('intro');
+  const [playerRole, setPlayerRole] = useState<Role | null>(null);
   const [selectedProsecutorArgs, setSelectedProsecutorArgs] = useState<number[]>([]);
   const [selectedDefenderArgs, setSelectedDefenderArgs] = useState<number[]>([]);
   const [currentPresentingArgIndex, setCurrentPresentingArgIndex] = useState(0);
@@ -242,7 +245,7 @@ const Index = () => {
             </ul>
           </div>
           <Button 
-            onClick={() => setStage('prosecution-select')} 
+            onClick={() => setStage('character-select')} 
             size="lg" 
             className="w-full text-lg h-14 bg-judge hover:bg-judge/90 text-white"
           >
@@ -721,6 +724,152 @@ const Index = () => {
     );
   };
 
+  const renderCharacterSelect = () => (
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-purple-50 via-orange-50 to-blue-50">
+      <Card className="max-w-5xl w-full animate-scale-in shadow-2xl">
+        <CardHeader className="text-center pb-4">
+          <CardTitle className="text-4xl font-bold text-judge mb-2">🎭 Выберите свою роль</CardTitle>
+          <CardDescription className="text-xl">
+            Каждая роль имеет свои задачи и влияет на ход судебного процесса
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="grid md:grid-cols-3 gap-6">
+            <Card 
+              className="cursor-pointer transition-all hover:scale-105 border-prosecutor border-2 hover:shadow-2xl"
+              onClick={() => {
+                setPlayerRole('prosecutor');
+                setStage('prosecution-select');
+              }}
+            >
+              <CardHeader className="text-center bg-prosecutor/10 pb-4">
+                <div className="mb-4 flex justify-center">
+                  <img 
+                    src={characters.prosecutor.image}
+                    alt="Обвинение" 
+                    className="w-32 h-32 rounded-full border-4 border-prosecutor shadow-lg animate-bounce-subtle"
+                  />
+                </div>
+                <CardTitle className="text-2xl text-prosecutor mb-2">Обвинение</CardTitle>
+                <Badge className="bg-prosecutor text-white">Вредное Трение</Badge>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-center text-muted-foreground mb-4">
+                  Докажите, что трение - главная проблема человечества
+                </p>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Icon name="Target" size={16} className="text-prosecutor" />
+                    <span>Выберите 3 аргумента обвинения</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Icon name="MessageSquare" size={16} className="text-prosecutor" />
+                    <span>Представьте их суду</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Icon name="Swords" size={16} className="text-prosecutor" />
+                    <span>Участвуйте в финальных дебатах</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="cursor-pointer transition-all hover:scale-105 border-defender border-2 hover:shadow-2xl"
+              onClick={() => {
+                setPlayerRole('defender');
+                setStage('prosecution-select');
+              }}
+            >
+              <CardHeader className="text-center bg-defender/10 pb-4">
+                <div className="mb-4 flex justify-center">
+                  <img 
+                    src={characters.defender.image}
+                    alt="Защита" 
+                    className="w-32 h-32 rounded-full border-4 border-defender shadow-lg animate-bounce-subtle"
+                  />
+                </div>
+                <CardTitle className="text-2xl text-defender mb-2">Защита</CardTitle>
+                <Badge className="bg-defender text-white">Полезное Трение</Badge>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-center text-muted-foreground mb-4">
+                  Докажите, что без трения невозможна жизнь
+                </p>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Icon name="Shield" size={16} className="text-defender" />
+                    <span>Выберите 3 аргумента защиты</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Icon name="MessageSquare" size={16} className="text-defender" />
+                    <span>Опровергните обвинения</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Icon name="Trophy" size={16} className="text-defender" />
+                    <span>Победите в дебатах</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="cursor-pointer transition-all hover:scale-105 border-judge border-2 hover:shadow-2xl"
+              onClick={() => {
+                setPlayerRole('judge');
+                setStage('prosecution-select');
+              }}
+            >
+              <CardHeader className="text-center bg-judge/10 pb-4">
+                <div className="mb-4 flex justify-center">
+                  <img 
+                    src="https://cdn.poehali.dev/projects/dc3fb366-3615-4a31-a6b9-090b764de0a1/files/182cb691-45d9-4587-bbd5-bcea4e89d106.jpg"
+                    alt="Судья" 
+                    className="w-32 h-32 rounded-full border-4 border-judge shadow-lg animate-bounce-subtle"
+                  />
+                </div>
+                <CardTitle className="text-2xl text-judge mb-2">Судья</CardTitle>
+                <Badge className="bg-judge text-white">Беспристрастный</Badge>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-center text-muted-foreground mb-4">
+                  Наблюдайте за процессом и выносите справедливый вердикт
+                </p>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Icon name="Scale" size={16} className="text-judge" />
+                    <span>Следите за аргументами сторон</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Icon name="CheckSquare" size={16} className="text-judge" />
+                    <span>Отвечайте на вопросы</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Icon name="Gavel" size={16} className="text-judge" />
+                    <span>Оцените обе стороны объективно</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="mt-8 bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
+            <div className="flex items-start gap-3">
+              <Icon name="Info" className="text-blue-600 mt-1 flex-shrink-0" size={24} />
+              <div>
+                <p className="font-semibold text-blue-900 mb-2">Подсказка:</p>
+                <p className="text-blue-800">
+                  Роль <strong>Судьи</strong> подходит для первого прохождения - вы увидите все аргументы обеих сторон. 
+                  Роли <strong>Обвинения</strong> и <strong>Защиты</strong> позволяют активно участвовать в процессе и выбирать стратегию!
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   const renderVerdict = () => (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-yellow-50 via-orange-50 to-amber-50">
       <Card className="max-w-3xl w-full animate-scale-in shadow-2xl">
@@ -782,6 +931,7 @@ const Index = () => {
             <Button 
               onClick={() => {
                 setStage('intro');
+                setPlayerRole(null);
                 setSelectedProsecutorArgs([]);
                 setSelectedDefenderArgs([]);
                 setCurrentPresentingArgIndex(0);
@@ -813,6 +963,7 @@ const Index = () => {
   return (
     <>
       {stage === 'intro' && renderIntro()}
+      {stage === 'character-select' && renderCharacterSelect()}
       {stage === 'prosecution-select' && renderProsecutionSelect()}
       {stage === 'prosecution-present' && renderProsecutionPresent()}
       {stage === 'task1' && renderTask('task1')}
