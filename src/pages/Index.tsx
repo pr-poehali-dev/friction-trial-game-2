@@ -189,7 +189,7 @@ const Index = () => {
   ];
 
   const getProgressPercentage = () => {
-    if (stage === 'court-session') {
+    if (stage === 'court-session' && courtDialog.length > 0) {
       return (dialogIndex / courtDialog.length) * 100;
     }
     return 0;
@@ -417,11 +417,17 @@ const Index = () => {
     const currentMessage = courtDialog[dialogIndex];
     const question = getCurrentQuestion();
     const answered = taskAnswers[dialogIndex] !== undefined;
+    const progressValue = getProgressPercentage();
 
     return (
       <div className="min-h-screen p-4 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
         <div className="max-w-4xl mx-auto space-y-6">
-          <Progress value={getProgressPercentage()} className="h-3" />
+          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+            <div 
+              className="bg-judge h-full transition-all duration-300" 
+              style={{ width: `${progressValue}%` }}
+            />
+          </div>
           
           <div className="flex items-center justify-center gap-8 mb-6">
             <div className="text-center">
